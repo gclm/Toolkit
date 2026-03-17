@@ -1,46 +1,59 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '0.6.5'
+    id 'org.jetbrains.intellij.platform' version '2.10.5'
 }
 
 group 'cn.silently9527'
-version '1.0.3'
+version '1.0.4'
 
-sourceCompatibility = 1.8
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
 
 repositories {
+    mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
     maven {
         url 'https://maven.aliyun.com/nexus/content/groups/public'
     }
-    mavenCentral()
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile  group: 'cn.hutool', name: 'hutool-http', version: '5.5.7'
-    compile  group: 'com.google.zxing', name: 'core', version: '3.1.0'
-    compile  group: 'com.google.zxing', name: 'javase', version: '3.1.0'
+    testImplementation group: 'junit', name: 'junit', version: '4.13.2'
+    implementation group: 'cn.hutool', name: 'hutool-http', version: '5.8.26'
+    implementation group: 'com.google.zxing', name: 'core', version: '3.5.3'
+    implementation group: 'com.google.zxing', name: 'javase', version: '3.5.3'
+
+    intellijPlatform {
+        local('/Applications/IntelliJ IDEA.app')
+        bundledPlugin('com.intellij.modules.json')
+        instrumentationTools()
+        pluginVerifier()
+    }
 }
 
-// See https://github.com/JetBrains/gradle-intellij-plugin/
-intellij {
-    // 插件名称
-    pluginName 'toolkit'
-    // 沙箱目录位置，用于保存IDEA的设置，默认在build文件下面，防止clean，放在根目录下。
-    sandboxDirectory = "${rootProject.rootDir}/idea-sandbox"
-    // 开发环境运行时使用的版本
-    version '183.4588.48'
-    type 'IU'
-    // 各种版本去这里找
-    // https://www.jetbrains.com/intellij-repository/releases
-    //Disables updating since-build attribute in plugin.xml
-    updateSinceUntilBuild false
-    downloadSources = true
-}
-patchPluginXml {
-    changeNotes ""
+intellijPlatform {
+    pluginConfiguration {
+        name = 'toolkit'
+        ideaVersion {
+            sinceBuild = '253'
+            untilBuild = '253.*'
+        }
+        changeNotes = """
+          <h3>Version 1.0.4</h3>
+          <ul>
+            <li>Updated for IntelliJ IDEA 2025.1 compatibility</li>
+            <li>Modernized plugin configuration</li>
+            <li>Updated dependencies to latest versions</li>
+          </ul>
+        """
+    }
+    sandboxContainer = file("${rootProject.rootDir}/idea-sandbox")
 }
 
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
-}  
+}

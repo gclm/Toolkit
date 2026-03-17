@@ -19,7 +19,7 @@ import java.awt.*;
 public abstract class AbstractToolkitCommandExecutor implements ToolkitCommandExecutor {
 
     protected Project getProject(DataContext dataContext) {
-        return (Project) dataContext.getData("project");
+        return dataContext.getData(CommonDataKeys.PROJECT);
     }
 
     protected JBPopup createPopup(String title, Dimension dimension, @Nullable Icon titleIcon, JComponent content) {

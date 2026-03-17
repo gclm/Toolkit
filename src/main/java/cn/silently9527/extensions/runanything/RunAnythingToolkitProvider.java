@@ -8,7 +8,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingAnActionProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,13 +24,21 @@ public class RunAnythingToolkitProvider extends RunAnythingAnActionProvider<AnAc
 
     private CacheService cacheService;
 
-    public RunAnythingToolkitProvider() {
-        cacheService = ServiceManager.getService(CacheService.class);
+    private CacheService getCacheService() {
+        if (cacheService == null) {
+            cacheService = ApplicationManager.getApplication().getService(CacheService.class);
+        }
+        return cacheService;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public @NotNull Collection<AnAction> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
+        CacheService cacheService = getCacheService();
+        if (cacheService == null) {
+            return createActions();
+        }
+
         Object value = cacheService.get(CACHE_KEY);
         if (Objects.nonNull(value)) {
             return (Collection<AnAction>) value;
@@ -50,6 +58,25 @@ public class RunAnythingToolkitProvider extends RunAnythingAnActionProvider<AnAc
     public @NotNull String getCommand(@NotNull AnAction value) {
         return this.getHelpCommand() + " " + ObjectUtils.notNull(value.getTemplatePresentation().getText(),
                 IdeBundle.message("run.anything.actions.undefined"));
+    }
+
+    @Override
+    public @Nullable AnAction findMatchingValue(@NotNull DataContext dataContext, @NotNull String pattern) {
+        String helpCommand = getHelpCommand();
+        if (!pattern.startsWith(helpCommand + " ")) {
+            return null;
+        }
+        String commandPart = pattern.substring(helpCommand.length()).trim();
+        if (commandPart.isEmpty()) {
+            return null;
+        }
+        for (AnAction action : getValues(dataContext, pattern)) {
+            String text = action.getTemplatePresentation().getText();
+            if (text != null && text.equalsIgnoreCase(commandPart)) {
+                return action;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -78,11 +105,7 @@ public class RunAnythingToolkitProvider extends RunAnythingAnActionProvider<AnAc
     @NotNull
     @Override
     public String getCompletionGroupTitle() {
-        return "toolkit"; //过滤界面中的名称
+        return "Toolkit"; //过滤界面中的名称
     }
 
-//    @Override
-//    public @Nullable String getAdText() {
-//        return "fwfwefwef";
-//    }
 }
